@@ -20,23 +20,6 @@ namespace WebApplication1.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
-        [Route("all")]
-        public async Task<IActionResult> GetUserList()
-        {
-            try
-            {
-                var users = await _userManager.Users.ToListAsync();
-                return Ok(users);
-
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-
-        [HttpGet]
         [Authorize]
         [Route("")]
         public async Task<IActionResult> GetUser()
