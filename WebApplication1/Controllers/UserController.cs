@@ -44,7 +44,7 @@ namespace WebApplication1.Controllers
         [HttpPost]
         [Authorize]
         [Route("")]
-        public async Task<IActionResult> UpdateUser([FromBody] UserModel model)
+        public async Task<IActionResult> UpdateUser([FromBody] UserInputModel model)
         {
             try
             {
@@ -56,6 +56,8 @@ namespace WebApplication1.Controllers
 
                 user.Email = model.Email;
                 user.PhoneNumber = model.PhoneNumber;
+                user.ModifiedDate = DateTime.UtcNow;
+                user.ModifiedBy = User.Identity?.Name;
                 var result = await _userManager.UpdateAsync(user);
 
                 if (result.Succeeded) return Ok(result);

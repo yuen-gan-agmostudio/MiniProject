@@ -35,6 +35,15 @@ namespace WebApplication1.Controllers
                 var result = await _signInManager.PasswordSignInAsync(username,password, rememberMe, true);
                 if (result.Succeeded)
                 {
+                    var user = _userManager.Users
+                        .Where(x => x.UserName == username
+                        && x.DeletedDate != null).FirstOrDefault();
+                    if (user != null)
+                    {
+                        await _signInManager.SignOutAsync();
+                        return BadRequest("Account terminated, please request ADMIN to recover account");
+                    }
+
                     return Ok("Successful Login");
                 }
                 else
