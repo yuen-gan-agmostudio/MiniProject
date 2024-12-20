@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using WebApplication1.Models;
 using WebApplication1.Services;
 
 namespace WebApplication1.Controllers
@@ -13,8 +14,8 @@ namespace WebApplication1.Controllers
     [Route("password")]
     public class PasswordController : ControllerBase
     {
-        private readonly UserManager<IdentityUser> _userManager;
-        public PasswordController(UserManager<IdentityUser> userManager)
+        private readonly UserManager<UserModel> _userManager;
+        public PasswordController(UserManager<UserModel> userManager)
         {
             _userManager = userManager;
         }

@@ -6,7 +6,7 @@ using WebApplication1.Models;
 
 namespace WebApplication1
 {
-    public class ApplicationDbContext : IdentityDbContext
+    public class ApplicationDbContext : IdentityDbContext<UserModel>
     {
         public DbSet<CourseModel> Courses { get; set; }
         public DbSet<UserCourseModel> UserCourses { get; set; }

@@ -59,6 +59,7 @@ namespace WebApplication1.Controllers
         {
             try
             {
+                model.CreatedBy = User.Identity?.Name;
                 CourseServiceManager.CreateCourse(model);
                 return Ok();
 
@@ -78,6 +79,7 @@ namespace WebApplication1.Controllers
             try
             {
                 model.Id = id;
+                model.ModifiedBy = User.Identity?.Name;
                 var updatedCourse = CourseServiceManager.UpdateCourse(model);
                 if (updatedCourse == null) return BadRequest("Not found");
                 return Ok(updatedCourse);
@@ -96,7 +98,12 @@ namespace WebApplication1.Controllers
         {
             try
             {
-                CourseServiceManager.DeleteCourse(id);
+                var model = new CourseModel() 
+                { 
+                    Id = id,
+                    DeletedBy = User.Identity?.Name
+                };
+                CourseServiceManager.DeleteCourse(model);
                 return Ok();
 
             }

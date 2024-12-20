@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using WebApplication1.Models;
 
 namespace WebApplication1.Controllers
 {
@@ -16,10 +17,10 @@ namespace WebApplication1.Controllers
     [Route("account")]
     public class AccountController : ControllerBase
     {
-        private readonly UserManager<IdentityUser> _userManager;
-        private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly UserManager<UserModel> _userManager;
+        private readonly SignInManager<UserModel> _signInManager;
 
-        public AccountController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager)
+        public AccountController(UserManager<UserModel> userManager, SignInManager<UserModel> signInManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -27,11 +28,11 @@ namespace WebApplication1.Controllers
 
         [HttpPost]
         [Route("login")]
-        public async Task<IActionResult> Login(string username, string password)
+        public async Task<IActionResult> Login(string username, string password, bool rememberMe)
         {
             try
             {
-                var result = await _signInManager.PasswordSignInAsync(username,password,false,true);
+                var result = await _signInManager.PasswordSignInAsync(username,password, rememberMe, true);
                 if (result.Succeeded)
                 {
                     return Ok("Successful Login");
@@ -70,7 +71,7 @@ namespace WebApplication1.Controllers
         {
             try
             {
-                var user = new IdentityUser { UserName = username };
+                var user = new UserModel { UserName = username };
                 var result = await _userManager.CreateAsync(user, password);
                 if (result.Succeeded)
                 {
@@ -98,7 +99,7 @@ namespace WebApplication1.Controllers
         {
             try
             {
-                var user = new IdentityUser { UserName = username };
+                var user = new UserModel { UserName = username };
                 var result = await _userManager.CreateAsync(user, password);
                 if (result.Succeeded)
                 {

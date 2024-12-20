@@ -12,9 +12,9 @@ namespace WebApplication1.Controllers
     [Route("user")]
     public class UserController : ControllerBase
     {
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<UserModel> _userManager;
 
-        public UserController(UserManager<IdentityUser> userManager)
+        public UserController(UserManager<UserModel> userManager)
         {
             _userManager = userManager;
         }
@@ -118,7 +118,8 @@ namespace WebApplication1.Controllers
                     result = CourseServiceManager.EnrollCourse(new UserCourseModel()
                     {
                         UserId = user.Id,
-                        CourseId = id
+                        CourseId = id,
+                        CreatedBy = user.UserName
                     });
                 }
                 else
@@ -126,7 +127,8 @@ namespace WebApplication1.Controllers
                     result = CourseServiceManager.WithdrawCourse(new UserCourseModel()
                     {
                         UserId = user.Id,
-                        CourseId = id
+                        CourseId = id,
+                        DeletedBy = user.UserName
                     });
                 }
 

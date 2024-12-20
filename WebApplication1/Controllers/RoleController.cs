@@ -13,9 +13,9 @@ namespace WebApplication1.Controllers
     [Route("role")]
     public class RoleController : ControllerBase
     {
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<UserModel> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-        public RoleController(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager)
+        public RoleController(UserManager<UserModel> userManager, RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
             _roleManager = roleManager;
@@ -137,7 +137,7 @@ namespace WebApplication1.Controllers
 
         [HttpGet]
         [Route("{id}/user")]
-        [ProducesResponseType(typeof(List<IdentityUser>), 200)]
+        [ProducesResponseType(typeof(List<UserModel>), 200)]
         public async Task<IActionResult> GetRoleUserList([FromRoute] string id)
         {
             try
@@ -146,7 +146,7 @@ namespace WebApplication1.Controllers
                 if (role == null) return BadRequest("Not found");
                 string roleName = string.IsNullOrEmpty(role.Name) ? string.Empty : role.Name;
 
-                var roleUserList = new List<IdentityUser>();
+                var roleUserList = new List<UserModel>();
 
                 foreach (var user in await _userManager.Users.ToListAsync())
                 {

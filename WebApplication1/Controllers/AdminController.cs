@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using WebApplication1.Models;
 
 namespace WebApplication1.Controllers
 {
@@ -10,9 +11,9 @@ namespace WebApplication1.Controllers
     [Route("admin")]
     public class AdminController : ControllerBase
     {
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<UserModel> _userManager;
 
-        public AdminController(UserManager<IdentityUser> userManager)
+        public AdminController(UserManager<UserModel> userManager)
         {
             _userManager = userManager;
         }
@@ -40,6 +41,24 @@ namespace WebApplication1.Controllers
             try
             {
                 var user = await _userManager.Users.Where(x => x.Id == id).FirstOrDefaultAsync();
+                if (user == null) return BadRequest("Not found");
+                return Ok(user);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpDelete]
+        [Route("user/{id}")]
+        public async Task<IActionResult> DeleteUser([FromRoute] string id)
+        {
+            try
+            {
+                var user = await _userManager.Users
+                    .Where(x => x.Id == id 
+                    && x.DeletedDate == null).FirstOrDefaultAsync();
                 if (user == null) return BadRequest("Not found");
                 return Ok(user);
             }
