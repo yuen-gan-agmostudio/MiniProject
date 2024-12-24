@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebApplication1.Models
 {
-    public class UserCourseModel
+    public class UserCourseModel : IEntity
     {
         public int Id { get; set; }
         public required string UserId { get; set; }

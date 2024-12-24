@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection.Metadata;
 using WebApplication1.Models;
+using WebApplication1.Services;
 
 namespace WebApplication1
 {
@@ -46,6 +47,9 @@ namespace WebApplication1
             builder.Services.AddIdentity<UserModel, IdentityRole>()
                 .AddTokenProvider<DataProtectorTokenProvider<UserModel>>(TokenOptions.DefaultProvider)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
+
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+            builder.Services.AddScoped<ICourseServiceManager, CourseServiceManager>();
 
             var app = builder.Build();
 

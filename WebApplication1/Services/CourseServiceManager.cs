@@ -10,157 +10,136 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace WebApplication1.Services
 {
-    public static class CourseServiceManager
+    public class CourseServiceManager : ICourseServiceManager
     {
-        public static List<CourseModel> GetCourseList(FilterModel filterModel)
-        {
-            using (var db = new ApplicationDbContext(new DbContextOptions<ApplicationDbContext>()))
-            {
-                var query = db.Courses.Where(x => x.DeletedDate == null).AsQueryable();
+        private readonly IUnitOfWork _unitOfWork;
 
-                var skip = (filterModel.Page - 1) * (filterModel.Take);
-                var courses = query.Skip(skip).Take(filterModel.Take).ToList();
-                return courses;
+        public CourseServiceManager(IUnitOfWork unitOfWork)
+        {
+            _unitOfWork = unitOfWork;
+        }
+
+        public List<CourseModel> GetCourseList(FilterModel filterModel)
+        {
+            var query = _unitOfWork.GetRepository<CourseModel>().Table.Where(x => x.DeletedDate == null).AsQueryable();
+
+            var skip = (filterModel.Page - 1) * (filterModel.Take);
+            var courses = query.Skip(skip).Take(filterModel.Take).ToList();
+            return courses;
+        }
+        public CourseModel? GetCourse(int id)
+        {
+            return _unitOfWork.GetRepository<CourseModel>().Table.Where(x => x.Id == id).FirstOrDefault();
+        }
+        public void CreateCourse(CourseModel model)
+        {
+            var newCourse = new CourseModel()
+            {
+                Name = model.Name,
+                Description = model.Description,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = model.CreatedBy
+            };
+            _unitOfWork.GetRepository<CourseModel>().Insert(newCourse);
+        }
+        public CourseModel? UpdateCourse(CourseModel model)
+        {
+            var course = _unitOfWork.GetRepository<CourseModel>().Table.Where(x => x.Id == model.Id).FirstOrDefault();
+            if (course != null)
+            {
+                course.Name = string.IsNullOrEmpty(model.Name) ? course.Name : model.Name;
+                course.Description = model.Description;
+                course.ModifiedDate = DateTime.UtcNow;
+                course.ModifiedBy = model.ModifiedBy;
+                _unitOfWork.GetRepository<CourseModel>().Update(course);
+            }
+            return course;
+        }
+        public void DeleteCourse(CourseModel model)
+        {
+            var course = _unitOfWork.GetRepository<CourseModel>().Table.Where(x => x.Id == model.Id).FirstOrDefault();
+            if (course != null)
+            {
+                course.DeletedDate = DateTime.UtcNow;
+                course.DeletedBy = model.DeletedBy;
+                _unitOfWork.GetRepository<CourseModel>().Update(course);
             }
         }
-        public static CourseModel? GetCourse(int id)
+        public bool EnrollCourse(UserCourseModel model)
         {
-            using (var db = new ApplicationDbContext(new DbContextOptions<ApplicationDbContext>()))
+            var course = _unitOfWork.GetRepository<CourseModel>().Table
+                .Where(x => x.Id == model.CourseId
+                && x.DeletedDate == null).FirstOrDefault();
+            if (course == null) return false;
+
+            var userCourse = _unitOfWork.GetRepository<UserCourseModel>().Table
+                .Where(x => x.UserId == model.UserId
+                && x.CourseId == model.CourseId
+                && x.DeletedDate == null).FirstOrDefault();
+            if (userCourse != null) return false;
+
+            _unitOfWork.GetRepository<UserCourseModel>().Insert(new UserCourseModel()
             {
-                var course = db.Courses.Where(x => x.Id == id).FirstOrDefault();
-                return course;
-            }
+                UserId = model.UserId,
+                CourseId = model.CourseId,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = model.CreatedBy
+            });
+            return true;
         }
-        public static void CreateCourse(CourseModel model)
+        public bool WithdrawCourse(UserCourseModel model)
         {
-            using (var db = new ApplicationDbContext(new DbContextOptions<ApplicationDbContext>()))
-            {
-                var newCourse = new CourseModel()
-                {
-                    Name = model.Name,
-                    Description = model.Description,
-                    CreatedDate = DateTime.UtcNow,
-                    CreatedBy = model.CreatedBy
-                };
-                db.Courses.Add(newCourse);
-                db.SaveChanges();
-            }
+            var course = _unitOfWork.GetRepository<CourseModel>().Table
+                .Where(x => x.Id == model.CourseId
+                && x.DeletedDate == null).FirstOrDefault();
+            if (course == null) return false;
+
+            var userCourse = _unitOfWork.GetRepository<UserCourseModel>().Table
+                .Where(x => x.UserId == model.UserId
+                && x.CourseId == model.CourseId
+                && x.DeletedDate == null).FirstOrDefault();
+            if (userCourse == null) return false;
+
+            userCourse.DeletedDate = DateTime.UtcNow;
+            userCourse.DeletedBy = model.DeletedBy;
+            _unitOfWork.GetRepository<UserCourseModel>().Update(userCourse);
+            return true;
         }
-        public static CourseModel? UpdateCourse(CourseModel model)
+        public List<UserCourseModel> GetCourseUserList(FilterModel filterModel)
         {
-            using (var db = new ApplicationDbContext(new DbContextOptions<ApplicationDbContext>()))
-            {
-                var course = db.Courses.Where(x => x.Id == model.Id).FirstOrDefault();
-                if(course != null)
-                {
-                    course.Name = string.IsNullOrEmpty(model.Name) ? course.Name : model.Name;
-                    course.Description = model.Description;
-                    course.ModifiedDate = DateTime.UtcNow;
-                    course.ModifiedBy = model.ModifiedBy;
-                    db.SaveChanges();
-                }
-                return course;
-            }
+            var query = _unitOfWork.GetRepository<UserCourseModel>().Table
+                .Include(x => x.User)
+                .Include(x => x.Course)
+                .Where(x => (!filterModel.CourseId.HasValue || x.CourseId == filterModel.CourseId)
+                && (string.IsNullOrEmpty(filterModel.UserId) || x.UserId == filterModel.UserId)
+                && x.DeletedDate == null
+                && x.Course != null && x.Course.DeletedDate == null)
+                .AsQueryable();
+
+            var skip = (filterModel.Page - 1) * (filterModel.Take);
+            var courseUsers = query.Skip(skip).Take(filterModel.Take).ToList();
+
+            return courseUsers;
         }
-        public static void DeleteCourse(CourseModel model)
+        public bool ApproveCourseEnrollment(UserCourseModel model)
         {
-            using (var db = new ApplicationDbContext(new DbContextOptions<ApplicationDbContext>()))
-            {
-                var course = db.Courses.Where(x => x.Id == model.Id).FirstOrDefault();
-                if (course != null)
-                {
-                    course.DeletedDate = DateTime.UtcNow;
-                    course.DeletedBy = model.DeletedBy;
-                    db.SaveChanges();
-                }
-            }
-        }
-        public static bool EnrollCourse(UserCourseModel model)
-        {
-            using (var db = new ApplicationDbContext(new DbContextOptions<ApplicationDbContext>()))
-            {
-                var course = db.Courses
-                    .Where(x => x.Id == model.CourseId
-                    && x.DeletedDate == null).FirstOrDefault();
-                if (course == null) return false;
+            var course = _unitOfWork.GetRepository<CourseModel>().Table
+                .Where(x => x.Id == model.CourseId).FirstOrDefault();
+            if (course == null) return false;
 
-                var userCourse = db.UserCourses
-                    .Where(x => x.UserId == model.UserId
-                    && x.CourseId == model.CourseId
-                    && x.DeletedDate == null).FirstOrDefault();
-                if (userCourse != null) return false;
+            var userCourse = _unitOfWork.GetRepository<UserCourseModel>().Table
+                .Where(x => x.UserId == model.UserId && x.CourseId == model.CourseId).FirstOrDefault();
+            if (userCourse == null) return false;
 
-                db.UserCourses.Add(new UserCourseModel()
-                {
-                    UserId = model.UserId,
-                    CourseId = model.CourseId,
-                    CreatedDate = DateTime.UtcNow,
-                    CreatedBy = model.CreatedBy
-                });
-                db.SaveChanges();
-                return true;
-            }
-        }
-        public static bool WithdrawCourse(UserCourseModel model)
-        {
-            using (var db = new ApplicationDbContext(new DbContextOptions<ApplicationDbContext>()))
-            {
-                var course = db.Courses
-                    .Where(x => x.Id == model.CourseId
-                    && x.DeletedDate == null).FirstOrDefault();
-                if (course == null) return false;
+            userCourse.IsApproved = model.IsApproved;
+            userCourse.ApprovedBy = model.IsApproved ? model.ApprovedBy : null;
+            userCourse.ApprovedDate = model.IsApproved ? DateTime.UtcNow : null;
+            userCourse.IsRejected = !model.IsApproved;
+            userCourse.RejectedBy = !model.IsApproved ? model.ApprovedBy : null;
+            userCourse.RejectedDate = !model.IsApproved ? DateTime.UtcNow : null;
 
-                var userCourse = db.UserCourses
-                    .Where(x => x.UserId == model.UserId 
-                    && x.CourseId == model.CourseId
-                    && x.DeletedDate == null).FirstOrDefault();
-                if(userCourse == null) return false;
-
-                userCourse.DeletedDate = DateTime.UtcNow;
-                userCourse.DeletedBy = model.DeletedBy;
-                db.SaveChanges();
-                return true;
-            }
-        }
-        public static List<UserCourseModel> GetCourseUserList(FilterModel filterModel)
-        {
-            using (var db = new ApplicationDbContext(new DbContextOptions<ApplicationDbContext>()))
-            {
-                var query = db.UserCourses
-                    .Include(x => x.User)
-                    .Include(x => x.Course)
-                    .Where(x => (!filterModel.CourseId.HasValue || x.CourseId == filterModel.CourseId)
-                    && (string.IsNullOrEmpty(filterModel.UserId) || x.UserId == filterModel.UserId)
-                    && x.DeletedDate == null
-                    && x.Course != null && x.Course.DeletedDate == null)
-                    .AsQueryable();
-
-                var skip = (filterModel.Page - 1) * (filterModel.Take);
-                var courseUsers = query.Skip(skip).Take(filterModel.Take).ToList();
-
-                return courseUsers;
-            }
-        }
-        public static bool ApproveCourseEnrollment(UserCourseModel model)
-        {
-            using (var db = new ApplicationDbContext(new DbContextOptions<ApplicationDbContext>()))
-            {
-                var course = db.Courses.Where(x => x.Id == model.CourseId).FirstOrDefault();
-                if (course == null) return false;
-
-                var userCourse = db.UserCourses.Where(x => x.UserId == model.UserId && x.CourseId == model.CourseId).FirstOrDefault();
-                if (userCourse == null) return false;
-
-                userCourse.IsApproved = model.IsApproved;
-                userCourse.ApprovedBy = model.IsApproved ? model.ApprovedBy : null;
-                userCourse.ApprovedDate = model.IsApproved ? DateTime.UtcNow : null;
-                userCourse.IsRejected = !model.IsApproved;
-                userCourse.RejectedBy = !model.IsApproved ? model.ApprovedBy : null;
-                userCourse.RejectedDate = !model.IsApproved ? DateTime.UtcNow : null;
-
-                db.SaveChanges();
-                return true;
-            }
+            _unitOfWork.GetRepository<UserCourseModel>().Update(userCourse);
+            return true;
         }
     }
 }

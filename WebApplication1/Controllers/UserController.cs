@@ -13,10 +13,12 @@ namespace WebApplication1.Controllers
     public class UserController : ControllerBase
     {
         private readonly UserManager<UserModel> _userManager;
+        private readonly ICourseServiceManager _courseService;
 
-        public UserController(UserManager<UserModel> userManager)
+        public UserController(UserManager<UserModel> userManager, ICourseServiceManager courseService)
         {
             _userManager = userManager;
+            _courseService = courseService;
         }
 
         [HttpGet]
@@ -85,11 +87,11 @@ namespace WebApplication1.Controllers
                 var user = await _userManager.GetUserAsync(User);
                 if (user == null) return BadRequest("Invalid login");
 
-                var result = CourseServiceManager.GetCourseUserList(new FilterModel() 
-                { 
-                    Page = page, 
-                    Take = take, 
-                    UserId = user.Id 
+                var result = _courseService.GetCourseUserList(new FilterModel()
+                {
+                    Page = page,
+                    Take = take,
+                    UserId = user.Id
                 });
 
                 return Ok(result);
@@ -117,7 +119,7 @@ namespace WebApplication1.Controllers
 
                 if (isEnroll)
                 {
-                    result = CourseServiceManager.EnrollCourse(new UserCourseModel()
+                    result = _courseService.EnrollCourse(new UserCourseModel()
                     {
                         UserId = user.Id,
                         CourseId = id,
@@ -126,7 +128,7 @@ namespace WebApplication1.Controllers
                 }
                 else
                 {
-                    result = CourseServiceManager.WithdrawCourse(new UserCourseModel()
+                    result = _courseService.WithdrawCourse(new UserCourseModel()
                     {
                         UserId = user.Id,
                         CourseId = id,

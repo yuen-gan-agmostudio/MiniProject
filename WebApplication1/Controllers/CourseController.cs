@@ -10,6 +10,13 @@ namespace WebApplication1.Controllers
     [Route("course")]
     public class CourseController : ControllerBase
     {
+        private readonly ICourseServiceManager _courseService;
+
+        public CourseController(ICourseServiceManager courseService)
+        {
+            _courseService = courseService;
+        }
+
         [HttpGet]
         [Route("")]
         [ProducesResponseType(typeof(List<CourseModel>), 200)]
@@ -19,7 +26,7 @@ namespace WebApplication1.Controllers
             {
                 if (ModelState.IsValid) 
                 {
-                    var courseList = CourseServiceManager.GetCourseList(new FilterModel() { Page = page, Take = take});
+                    var courseList = _courseService.GetCourseList(new FilterModel() { Page = page, Take = take });
                     return Ok(courseList);
                 }
                 else
@@ -41,7 +48,7 @@ namespace WebApplication1.Controllers
         {
             try
             {
-                var course = CourseServiceManager.GetCourse(id);
+                var course = _courseService.GetCourse(id);
                 if (course == null) return BadRequest("Not found");
                 return Ok(course);
 
@@ -60,7 +67,7 @@ namespace WebApplication1.Controllers
             try
             {
                 model.CreatedBy = User.Identity?.Name;
-                CourseServiceManager.CreateCourse(model);
+                _courseService.CreateCourse(model);
                 return Ok();
 
             }
@@ -80,7 +87,7 @@ namespace WebApplication1.Controllers
             {
                 model.Id = id;
                 model.ModifiedBy = User.Identity?.Name;
-                var updatedCourse = CourseServiceManager.UpdateCourse(model);
+                var updatedCourse = _courseService.UpdateCourse(model);
                 if (updatedCourse == null) return BadRequest("Not found");
                 return Ok(updatedCourse);
 
@@ -103,7 +110,7 @@ namespace WebApplication1.Controllers
                     Id = id,
                     DeletedBy = User.Identity?.Name
                 };
-                CourseServiceManager.DeleteCourse(model);
+                _courseService.DeleteCourse(model);
                 return Ok();
 
             }
@@ -121,7 +128,7 @@ namespace WebApplication1.Controllers
         {
             try
             {
-                var users = CourseServiceManager.GetCourseUserList(new FilterModel()
+                var users = _courseService.GetCourseUserList(new FilterModel()
                 {
                     Page = page,
                     Take = take,
@@ -144,7 +151,7 @@ namespace WebApplication1.Controllers
         {
             try
             {
-                var result = CourseServiceManager.ApproveCourseEnrollment(new UserCourseModel()
+                var result = _courseService.ApproveCourseEnrollment(new UserCourseModel()
                 {
                     UserId = userId,
                     CourseId = id,

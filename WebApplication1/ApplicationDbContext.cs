@@ -13,9 +13,5 @@ namespace WebApplication1
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
         }
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseSqlServer("Server=(LocalDb)\\MSSQLLocalDB;Database=Test;Trusted_Connection=True;TrustServerCertificate=True;");
-        }
     }
 }
