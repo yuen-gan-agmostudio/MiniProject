@@ -25,7 +25,7 @@ namespace WebApplication1
         public virtual IRepository<TEntity> GetRepository<TEntity>() where TEntity : class, IEntity
         {
             var repository = new SqlRepository<DbContext, TEntity>(_context);
-            return (IRepository<TEntity>)repository;
+            return repository;
         }
 
         public virtual void AutoDetectChangesOn()
