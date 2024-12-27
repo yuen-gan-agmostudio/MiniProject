@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection.Metadata;
+using WebApplication1.Extensions;
 using WebApplication1.Models;
 using WebApplication1.Services;
 
@@ -41,15 +42,8 @@ namespace WebApplication1
                 };
             });
 
-            var connectionString = builder.Configuration.GetConnectionString("DBConnectionString") ?? throw new InvalidOperationException("Connection string 'DBConnectionString' not found.");
-            builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
-
-            builder.Services.AddIdentity<UserModel, IdentityRole>()
-                .AddTokenProvider<DataProtectorTokenProvider<UserModel>>(TokenOptions.DefaultProvider)
-                .AddEntityFrameworkStores<ApplicationDbContext>();
-
-            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-            builder.Services.AddScoped<ICourseServiceManager, CourseServiceManager>();
+            builder.Services.AddSqlServer(builder.Configuration);
+            builder.Services.AddServices();
 
             var app = builder.Build();
 
